@@ -7,11 +7,12 @@ char *read(int *number, char *string, int *arrayControler, int *stringLenght);
 int getLetterValue(char letter);
 void processData(char *string, int arrayControler, int stringLenght);
 int getFirstIndex(char *string, int stringLenght, int start);
+int getLast(char *string, int arrayControler, int start);
 
 /**
  * Stages of the program
  *   - Reading of the string - Done
- *   - Processing of the string - To Do -> right now best algorithm is O(N²) trying to optimize to maybe O(N * log(N))
+ *   - Processing of the string - Best Case scenario O(N)
  *   - Writting output - To Do
  */
 
@@ -28,7 +29,7 @@ int getFirstIndex(char *string, int stringLenght, int start);
 char *read(int *number, char *string, int *arrayControler, int *stringLenght)
 {
     // Declares variables
-    int aux = 0, aux2 = 0, aux1 = 0;
+    int aux = 0, aux1 = 0;
 
     scanf("%ms", &string); // Reads a string of unknow size -> this memory is allocated int the heap and will need to be cleaned up
 
@@ -82,44 +83,56 @@ int getLetterValue(char letter)
     }
 }
 
+/**
+ * @brief Processeces the data that is in the string
+ *
+ * @param string Place where the inputed data is stored
+ * @param arrayControler Beggining of the letters in the array
+ * @param stringLenght Complete lenght of the string
+ */
 void processData(char *string, int arrayControler, int stringLenght)
 {
     int flag = 1;
-    // char last = ' ';
     int lastIndexUsed;
     int lastValue = 0, nowValue = 0;
+    lastIndexUsed = arrayControler;
 
-    while (flag) // We keep in this loop while the last iteration through the array change something after that the string is as short as possible
+    for (int i = arrayControler + 1; i < stringLenght; i++)
     {
-        flag = 0; // Forces The flag to be zero, if by the end of the 'for loop' it is not zero then a change was made, meaning another iteration is needed
-
-        lastIndexUsed = getFirstIndex(string, stringLenght, arrayControler - 1);
-        lastValue = getLetterValue(string[lastIndexUsed]);
-
-        for (int i = getFirstIndex(string, stringLenght, lastIndexUsed); i < stringLenght && i > 0; i = getFirstIndex(string, stringLenght, i)) // Iteration Throug the arrray
+        if (lastIndexUsed != -1 && getLetterValue(string[lastIndexUsed]) + getLetterValue(string[i]) == 0)
         {
-            if (i == -1)
-                break;
-            nowValue = getLetterValue(string[i]);
-            if ((nowValue + lastValue) == 0)
+            flag = 1;
+
+            string[i] = string[lastIndexUsed] = 'N';
+
+            lastIndexUsed = getLast(string, arrayControler, lastIndexUsed);
+
+            while (flag) // This cicle check if the two letter that ware remove induced new combination that can be removed also
             {
-                string[lastIndexUsed] = string[i] = 'N';
-                lastIndexUsed = i = -1;
-                flag = 1;
-                break;
+                flag = 0;
+
+                if (i < stringLenght &&
+                    lastIndexUsed != -1 &&
+                    getLetterValue(string[lastIndexUsed]) + getLetterValue(string[i]) == 0)
+                {
+                    string[i++] = string[lastIndexUsed] = 'N';
+                    lastIndexUsed = getLast(string, arrayControler, lastIndexUsed);
+                    flag = 1;
+                }
+                else
+                    break;
             }
-            else
-            {
-                // Update Values of the "last" variables
-                lastIndexUsed = i;
-                lastValue = nowValue;
-            }
+        }
+        else
+        {
+            lastIndexUsed = i;
         }
     }
 
     for (int i = arrayControler; i < stringLenght + 1; i++) // Test if it doing what is needs;
         if (string[i] != 'N')
-            printf("%c ", string[i]);
+            fprintf(stdout, "%c", string[i]);
+    fprintf(stdout, "\n");
     return;
 }
 
@@ -137,6 +150,22 @@ int getFirstIndex(char *string, int stringLenght, int start)
         if (string[i] != 'N')                      // Check if the letter has been processed
             return i;                              // Return the Index
     return -1;                                     // Return -1 to know that is the last letter
+}
+
+/**
+ * @brief Get most close number that has not been "deleted" from the string
+ *
+ * @param string -> String that has the data
+ * @param arrayControler -> Index of the string where the letters start
+ * @param start -> Index where we need to start looking
+ * @return int ->Index of the first found that was not 'N'
+ */
+int getLast(char *string, int arrayControler, int start)
+{
+    for (int i = start - 1; i >= arrayControler; i--)
+        if (string[i] != 'N')
+            return i; // Return
+    return -1;
 }
 
 /**
